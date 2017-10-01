@@ -1,0 +1,717 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Google authentication playground",
+		"_postman_id": "8b20e683-1b56-a8e1-1182-a508ecaa6052",
+		"description": "# Purpose    \nSet of requests to some Google APIs.  \nEach request requires an Authentication through an OAuth2 token. \nThis collection also includes a flow through test scripts to automatically refresh the token in case the latter is expired or invalid.\n\n# Installation\n## Environment\nFor this collection to work we need an environment with the following keys:   \n\n* token\n* userId\n* clientId\n* clientSecret\n* refreshToken\n* lastRequestId\n* isTokenValid\n\n###  Token\nContain the OAuth2 token. Let it empty. \n\n### userId\nUser id used for the request to the Google APIs.  \nSet it to *me*.\n\n### clientId\nGoogle OAuth2 client Id. Set the value with the id of the generated client in the next section.  \n\n### clientSecret\nGoogle OAuth2 client secret. Set the value with the id of the generated client in the next section. \n\n### refreshToken\nOAuth2 refresh token to initialize with the one we get in the OAuth2 playground.   \nSee next section.\n\n### lastRequestId\nUsed for the flow in the collection.   \nIf a request detects an invalid token, then it set the refresh request as the next one and set the *lastRequestId* with its own id.  \nAfter the refresh, the next request is set to *lastRequestId* and the flow keeps going on.\n\n## Google cloud project\nTo use this collection, you must create a google cloud platform project and create an OAuth2 web client.  \nOnce created, white list the callback URL *https://www.getpostman.com/oauth2/callback*.  \n\n## Enabling APIs\nTo play around with Google+ and Gmail API, enable these APIs for your project.\n\n## Generating a refresh token\nIn order to let Postman generates a valid token, we will set in a dedicated environment variable a refresh token.  \nGo to the Google [OAuth2 playground](https://developers.google.com/oauthplayground/) and set your own OAuth credential with the one of the previously created OAuth2 client (click on the Gear on the right corner).  \nDo not forget to check *offline access*.\nSet the scopes:\n\n* https://www.googleapis.com/auth/contacts   \n* https://www.googleapis.com/auth/plus.me  \n* https://mail.google.com/ \n\nYou can now generate your token, and get the associated refresh token that you copy/paste in your postman environment under the key *refreshToken*.  \n\n# Authentication\nAuthentication is made following the Google OAuth2 flow.  \nFor more information please refer to the following links:  \n\n* [Google Identity Platform](https://developers.google.com/identity/protocols/OAuth2WebServer#exchange-authorization-code)    \n\n* [Oauth2 playground](https://developers.google.com/oauthplayground/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Check Google OAuth2 token validity",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"if(jsonData.error === \"invalid_token\"){",
+							"    console.log(\"Token not valid, creating another one with the refresh toke.\")",
+							"    pm.environment.set(\"lastRequestId\", pm.info.requestId);",
+							"    postman.setNextRequest('refresh token');",
+							"}",
+							"",
+							"// Assertions",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Scope contains contacts and mails\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.access_type).to.eql('offline');",
+							"    pm.expect(jsonData.scope).to.eql(\"https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/plus.me https://mail.google.com/\");",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": {
+					"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
+					"protocol": "https",
+					"host": [
+						"www",
+						"googleapis",
+						"com"
+					],
+					"path": [
+						"oauth2",
+						"v1",
+						"tokeninfo"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": "The easiest way to validate an ID token is to use the tokeninfo endpoint.  \nCalling this endpoint involves an additional network request that does most of the validation for you, but introduces some latency and the potential for network errors.  \n\n\nTo validate an ID token using the tokeninfo endpoint, make an HTTPS POST or GET request to the endpoint, and pass your ID token in the id_token parameter.  \nIf the token is properly signed and the iss and exp claims have the expected values, you will get a HTTP 200 response, where the body contains the JSON-formatted ID token claims.  \n\nOnce you get these claims, you still need to check that the aud claim contains one of your app's client IDs.  \nIf it does, then the token is both valid and intended for your client, and you can safely retrieve and use the user's unique Google ID from the sub claim."
+			},
+			"response": [
+				{
+					"id": "ddc39554-13b4-4954-83f0-f30c37fac1f5",
+					"name": "Correct token",
+					"originalRequest": {
+						"url": {
+							"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
+							"protocol": "https",
+							"host": [
+								"www",
+								"googleapis",
+								"com"
+							],
+							"path": [
+								"oauth2",
+								"v1",
+								"tokeninfo"
+							],
+							"query": [
+								{
+									"key": "access_token",
+									"value": "{{token}}",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Alt-Svc",
+							"value": "quic=\":443\"; ma=2592000; v=\"39,38,37,35\"",
+							"name": "Alt-Svc",
+							"description": "Custom header"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip",
+							"name": "Content-Encoding",
+							"description": "The type of encoding used on the data."
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=UTF-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 01 Oct 2017 18:09:09 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Expires",
+							"value": "Mon, 01 Jan 1990 00:00:00 GMT",
+							"name": "Expires",
+							"description": "Gives the date/time after which the response is considered stale"
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache",
+							"name": "Pragma",
+							"description": "Implementation-specific headers that may have various effects anywhere along the request-response chain."
+						},
+						{
+							"key": "Server",
+							"value": "GSE",
+							"name": "Server",
+							"description": "A name for the server"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "Vary",
+							"value": "X-Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff",
+							"name": "X-Content-Type-Options",
+							"description": "The only defined value, \"nosniff\", prevents Internet Explorer from MIME-sniffing a response away from the declared content-type"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN",
+							"name": "X-Frame-Options",
+							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block",
+							"name": "X-XSS-Protection",
+							"description": "Cross-site scripting (XSS) filter"
+						}
+					],
+					"cookie": [],
+					"responseTime": 241,
+					"body": "{\n \"issued_to\": \"49614241791-0mjetohlrqi14grrr5r5f0el7i660bou.apps.googleusercontent.com\",\n \"audience\": \"49614241791-0mjetohlrqi14grrr5r5f0el7i660bou.apps.googleusercontent.com\",\n \"user_id\": \"104599585455900502369\",\n \"scope\": \"https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/plus.me https://mail.google.com/\",\n \"expires_in\": 3300,\n \"access_type\": \"offline\"\n}\n"
+				},
+				{
+					"id": "97c3d98c-baee-4079-a3ec-547e037ce9af",
+					"name": "Wrong token",
+					"originalRequest": {
+						"url": {
+							"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
+							"protocol": "https",
+							"host": [
+								"www",
+								"googleapis",
+								"com"
+							],
+							"path": [
+								"oauth2",
+								"v1",
+								"tokeninfo"
+							],
+							"query": [
+								{
+									"key": "access_token",
+									"value": "{{token}}",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "GET",
+						"header": [],
+						"body": {}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Alt-Svc",
+							"value": "quic=\":443\"; ma=2592000; v=\"39,38,37,35\"",
+							"name": "Alt-Svc",
+							"description": "Custom header"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "private, max-age=0",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip",
+							"name": "Content-Encoding",
+							"description": "The type of encoding used on the data."
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=UTF-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 01 Oct 2017 18:10:47 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "Expires",
+							"value": "Sun, 01 Oct 2017 18:10:47 GMT",
+							"name": "Expires",
+							"description": "Gives the date/time after which the response is considered stale"
+						},
+						{
+							"key": "Server",
+							"value": "GSE",
+							"name": "Server",
+							"description": "A name for the server"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "Vary",
+							"value": "X-Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff",
+							"name": "X-Content-Type-Options",
+							"description": "The only defined value, \"nosniff\", prevents Internet Explorer from MIME-sniffing a response away from the declared content-type"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN",
+							"name": "X-Frame-Options",
+							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block",
+							"name": "X-XSS-Protection",
+							"description": "Cross-site scripting (XSS) filter"
+						}
+					],
+					"cookie": [],
+					"responseTime": 150,
+					"body": "{\n \"error\": \"invalid_token\",\n \"error_description\": \"Invalid Value\"\n}\n"
+				}
+			]
+		},
+		{
+			"name": "Get user info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"if(jsonData.error && jsonData.error.code === 401){",
+							"    console.log(\"token invalid\")",
+							"    pm.environment.set(\"lastRequestId\", pm.info.requestId);",
+							"    postman.setNextRequest('refresh token');",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "https://www.googleapis.com/plus/v1/people/{{userId}}",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": "# Purpose\nGet google account information about an account.  \nTo get information about yourself an alias for the userId is **me**."
+			},
+			"response": []
+		},
+		{
+			"name": "Get gmail profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"",
+							"if(jsonData.error && jsonData.error.code === 401){",
+							"    console.log(\"token invalid\")",
+							"    pm.environment.set(\"lastRequestId\", pm.info.requestId);",
+							"    postman.setNextRequest('refresh token');",
+							"}",
+							"",
+							"",
+							"// we set this request as the last one.",
+							"postman.setNextRequest(\"\")"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": "# Purpose\nGetting some basic Gmail informations about a given user."
+			},
+			"response": [
+				{
+					"id": "7992584f-09b0-4db1-8471-ef686ff1dfa5",
+					"name": "Get gmail profile",
+					"originalRequest": {
+						"url": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"description": "",
+								"disabled": false
+							}
+						],
+						"body": {}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Alt-Svc",
+							"value": "quic=\":443\"; ma=2592000; v=\"39,38,37,35\"",
+							"name": "Alt-Svc",
+							"description": "Custom header"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "private, max-age=0, must-revalidate, no-transform",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip",
+							"name": "Content-Encoding",
+							"description": "The type of encoding used on the data."
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=UTF-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 01 Oct 2017 18:37:06 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "ETag",
+							"value": "\"n7JQc-221gnWXUeVwWxW4ceYE3w/8XWwJQzsLW_ZupzEoP5hvKKezdQ\"",
+							"name": "ETag",
+							"description": "An identifier for a specific version of a resource, often a message digest"
+						},
+						{
+							"key": "Expires",
+							"value": "Sun, 01 Oct 2017 18:37:06 GMT",
+							"name": "Expires",
+							"description": "Gives the date/time after which the response is considered stale"
+						},
+						{
+							"key": "Server",
+							"value": "GSE",
+							"name": "Server",
+							"description": "A name for the server"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": "The form of encoding used to safely transfer the entity to the user. Currently defined methods are: chunked, compress, deflate, gzip, identity."
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "Vary",
+							"value": "X-Origin",
+							"name": "Vary",
+							"description": "Tells downstream proxies how to match future request headers to decide whether the cached response can be used rather than requesting a fresh one from the origin server."
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff",
+							"name": "X-Content-Type-Options",
+							"description": "The only defined value, \"nosniff\", prevents Internet Explorer from MIME-sniffing a response away from the declared content-type"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN",
+							"name": "X-Frame-Options",
+							"description": "Clickjacking protection: \"deny\" - no rendering within a frame, \"sameorigin\" - no rendering if origin mismatch"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block",
+							"name": "X-XSS-Protection",
+							"description": "Cross-site scripting (XSS) filter"
+						}
+					],
+					"cookie": [],
+					"responseTime": 147,
+					"body": "{\n    \"emailAddress\": \"toto@gmail.com\",\n    \"messagesTotal\": 32228,\n    \"threadsTotal\": 25000,\n    \"historyId\": \"3795870\"\n}"
+				}
+			]
+		},
+		{
+			"name": "refresh token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"console.log(\"Refreshing token\")",
+							"var refreshedToken=pm.response.json().access_token;",
+							"pm.environment.set(\"token\", refreshedToken);",
+							"",
+							"var lastRequestId = pm.environment.get(\"lastRequestId\");",
+							"",
+							"",
+							"if(lastRequestId && !pm.environment.get(\"isTokenValid\")){",
+							"   postman.setNextRequest(lastRequestId) ",
+							"}",
+							"",
+							"pm.environment.set(\"isTokenValid\", \"true\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": {
+					"raw": "https://www.googleapis.com/oauth2/v4/token?client_id={{clientId}}&client_secret={{clientSecret}}&refresh_token={{refreshToken}}&grant_type=refresh_token",
+					"protocol": "https",
+					"host": [
+						"www",
+						"googleapis",
+						"com"
+					],
+					"path": [
+						"oauth2",
+						"v4",
+						"token"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{clientId}}",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "client_secret",
+							"value": "{{clientSecret}}",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "refresh_token",
+							"value": "{{refreshToken}}",
+							"equals": true,
+							"description": ""
+						},
+						{
+							"key": "grant_type",
+							"value": "refresh_token",
+							"equals": true,
+							"description": ""
+						}
+					],
+					"variable": []
+				},
+				"method": "POST",
+				"header": [],
+				"body": {},
+				"description": "# Purpose\nRequest Util to refresh a token that is either invalid or expired.  \nGiven a clientId, a client secret and a google OAuth2 refresh token, we get in return a refreshed token."
+			},
+			"response": [
+				{
+					"id": "2332e38e-2901-49c9-9ae4-93b5744b4e68",
+					"name": "Refresh token response",
+					"originalRequest": {
+						"url": {
+							"raw": "https://www.googleapis.com/oauth2/v4/token?client_id={{clientId}}&client_secret={{clientSecret}}&refresh_token={{refreshToken}}&grant_type=refresh_token",
+							"protocol": "https",
+							"host": [
+								"www",
+								"googleapis",
+								"com"
+							],
+							"path": [
+								"oauth2",
+								"v4",
+								"token"
+							],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "{{clientId}}",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "client_secret",
+									"value": "{{clientSecret}}",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refreshToken}}",
+									"equals": true,
+									"description": ""
+								},
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"equals": true,
+									"description": ""
+								}
+							],
+							"variable": []
+						},
+						"method": "POST",
+						"header": [],
+						"body": {}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Alt-Svc",
+							"value": "quic=\":443\"; ma=2592000; v=\"39,38,37,35\"",
+							"name": "Alt-Svc",
+							"description": ""
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, no-store, max-age=0, must-revalidate",
+							"name": "Cache-Control",
+							"description": ""
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip",
+							"name": "Content-Encoding",
+							"description": ""
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=UTF-8",
+							"name": "Content-Type",
+							"description": ""
+						},
+						{
+							"key": "Date",
+							"value": "Sun, 01 Oct 2017 18:34:29 GMT",
+							"name": "Date",
+							"description": ""
+						},
+						{
+							"key": "Expires",
+							"value": "Mon, 01 Jan 1990 00:00:00 GMT",
+							"name": "Expires",
+							"description": ""
+						},
+						{
+							"key": "Pragma",
+							"value": "no-cache",
+							"name": "Pragma",
+							"description": ""
+						},
+						{
+							"key": "Server",
+							"value": "GSE",
+							"name": "Server",
+							"description": ""
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked",
+							"name": "Transfer-Encoding",
+							"description": ""
+						},
+						{
+							"key": "Vary",
+							"value": "Origin",
+							"name": "Vary",
+							"description": ""
+						},
+						{
+							"key": "Vary",
+							"value": "X-Origin",
+							"name": "Vary",
+							"description": ""
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff",
+							"name": "X-Content-Type-Options",
+							"description": ""
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN",
+							"name": "X-Frame-Options",
+							"description": ""
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block",
+							"name": "X-XSS-Protection",
+							"description": ""
+						}
+					],
+					"cookie": [],
+					"responseTime": 548,
+					"body": "{\n    \"access_token\": \"ya29.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\n    \"token_type\": \"Bearer\",\n    \"expires_in\": 3600,\n    \"id_token\": \"eyJhbGcXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXUMwJGvvJcv_jHArr0-dBl99c7Kq0yasg0wzZSpiOBjd739Z3ybP7_A-QEht8rJefWp_SpBxZvcgH9-u-SXKNflih_zmxJ6uhE2wfWzvnzyaWO4KU7B33XL_ISTXNGrja_0DkvDuUKNWh7E7ikYpnA0EaeLKG3TaBcYqVH0lLuRqeLYQTkJ9JM9kHXFuQduO9-nuKJ91Vo69S-TXyppWZbv7rSB1JBm44dH06o9sbG5lZXYP04klR-cSRpYlEw\"\n}"
+				}
+			]
+		}
+	]
+}

@@ -1,10 +1,9 @@
 {
-	"variables": [],
 	"info": {
-		"name": "Google authentication playground",
+		"name": "Google authentication playground workflow",
 		"_postman_id": "8b20e683-1b56-a8e1-1182-a508ecaa6052",
 		"description": "# Purpose    \nSet of requests to some Google APIs.  \nEach request requires an Authentication through an OAuth2 token. \nThis collection also includes a flow through test scripts to automatically refresh the token in case the latter is expired or invalid.\n\n# Installation\n## Environment\nFor this collection to work we need an environment with the following keys:   \n\n* token\n* userId\n* clientId\n* clientSecret\n* refreshToken\n* lastRequestId\n* isTokenValid\n\n###  Token\nContain the OAuth2 token. Let it empty. \n\n### userId\nUser id used for the request to the Google APIs.  \nSet it to *me*.\n\n### clientId\nGoogle OAuth2 client Id. Set the value with the id of the generated client in the next section.  \n\n### clientSecret\nGoogle OAuth2 client secret. Set the value with the id of the generated client in the next section. \n\n### refreshToken\nOAuth2 refresh token to initialize with the one we get in the OAuth2 playground.   \nSee next section.\n\n### lastRequestId\nUsed for the flow in the collection.   \nIf a request detects an invalid token, then it set the refresh request as the next one and set the *lastRequestId* with its own id.  \nAfter the refresh, the next request is set to *lastRequestId* and the flow keeps going on.\n\n## Google cloud project\nTo use this collection, you must create a google cloud platform project and create an OAuth2 web client.  \nOnce created, white list the callback URL *https://www.getpostman.com/oauth2/callback*.  \n\n## Enabling APIs\nTo play around with Google+ and Gmail API, enable these APIs for your project.\n\n## Generating a refresh token\nIn order to let Postman generates a valid token, we will set in a dedicated environment variable a refresh token.  \nGo to the Google [OAuth2 playground](https://developers.google.com/oauthplayground/) and set your own OAuth credential with the one of the previously created OAuth2 client (click on the Gear on the right corner).  \nDo not forget to check *offline access*.\nSet the scopes:\n\n* https://www.googleapis.com/auth/contacts   \n* https://www.googleapis.com/auth/plus.me  \n* https://mail.google.com/ \n\nYou can now generate your token, and get the associated refresh token that you copy/paste in your postman environment under the key *refreshToken*.  \n\n# Authentication\nAuthentication is made following the Google OAuth2 flow.  \nFor more information please refer to the following links:  \n\n* [Google Identity Platform](https://developers.google.com/identity/protocols/OAuth2WebServer#exchange-authorization-code)    \n\n* [Oauth2 playground](https://developers.google.com/oauthplayground/)",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -20,7 +19,11 @@
 							"if(jsonData.error === \"invalid_token\"){",
 							"    console.log(\"Token not valid, creating another one with the refresh toke.\")",
 							"    pm.environment.set(\"lastRequestId\", pm.info.requestId);",
+							"    pm.environment.set(\"isTokenValid\", false);",
+							"    console.log(\"next request is refresh\")",
 							"    postman.setNextRequest('refresh token');",
+							"}else{",
+							"    console.log(\"valid token\");",
 							"}",
 							"",
 							"// Assertions",
@@ -38,6 +41,9 @@
 				}
 			],
 			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
 				"url": {
 					"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
 					"protocol": "https",
@@ -55,22 +61,20 @@
 						{
 							"key": "access_token",
 							"value": "{{token}}",
-							"equals": true,
-							"description": ""
+							"equals": true
 						}
-					],
-					"variable": []
+					]
 				},
-				"method": "GET",
-				"header": [],
-				"body": {},
 				"description": "The easiest way to validate an ID token is to use the tokeninfo endpoint.  \nCalling this endpoint involves an additional network request that does most of the validation for you, but introduces some latency and the potential for network errors.  \n\n\nTo validate an ID token using the tokeninfo endpoint, make an HTTPS POST or GET request to the endpoint, and pass your ID token in the id_token parameter.  \nIf the token is properly signed and the iss and exp claims have the expected values, you will get a HTTP 200 response, where the body contains the JSON-formatted ID token claims.  \n\nOnce you get these claims, you still need to check that the aud claim contains one of your app's client IDs.  \nIf it does, then the token is both valid and intended for your client, and you can safely retrieve and use the user's unique Google ID from the sub claim."
 			},
 			"response": [
 				{
-					"id": "ddc39554-13b4-4954-83f0-f30c37fac1f5",
+					"id": "0fd4c8db-4642-454e-a94b-b32411a7c962",
 					"name": "Correct token",
 					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"body": {},
 						"url": {
 							"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
 							"protocol": "https",
@@ -88,15 +92,10 @@
 								{
 									"key": "access_token",
 									"value": "{{token}}",
-									"equals": true,
-									"description": ""
+									"equals": true
 								}
-							],
-							"variable": []
-						},
-						"method": "GET",
-						"header": [],
-						"body": {}
+							]
+						}
 					},
 					"status": "OK",
 					"code": 200,
@@ -193,9 +192,12 @@
 					"body": "{\n \"issued_to\": \"49614241791-0mjetohlrqi14grrr5r5f0el7i660bou.apps.googleusercontent.com\",\n \"audience\": \"49614241791-0mjetohlrqi14grrr5r5f0el7i660bou.apps.googleusercontent.com\",\n \"user_id\": \"104599585455900502369\",\n \"scope\": \"https://www.googleapis.com/auth/contacts https://www.googleapis.com/auth/plus.me https://mail.google.com/\",\n \"expires_in\": 3300,\n \"access_type\": \"offline\"\n}\n"
 				},
 				{
-					"id": "97c3d98c-baee-4079-a3ec-547e037ce9af",
+					"id": "545e1701-0c0a-41e2-aa30-0e409edc7df0",
 					"name": "Wrong token",
 					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"body": {},
 						"url": {
 							"raw": "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={{token}}",
 							"protocol": "https",
@@ -213,15 +215,10 @@
 								{
 									"key": "access_token",
 									"value": "{{token}}",
-									"equals": true,
-									"description": ""
+									"equals": true
 								}
-							],
-							"variable": []
-						},
-						"method": "GET",
-						"header": [],
-						"body": {}
+							]
+						}
 					},
 					"status": "Bad Request",
 					"code": 400,
@@ -333,16 +330,29 @@
 				}
 			],
 			"request": {
-				"url": "https://www.googleapis.com/plus/v1/people/{{userId}}",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer {{token}}",
-						"description": ""
+						"value": "Bearer {{token}}"
 					}
 				],
 				"body": {},
+				"url": {
+					"raw": "https://www.googleapis.com/plus/v1/people/{{userId}}",
+					"protocol": "https",
+					"host": [
+						"www",
+						"googleapis",
+						"com"
+					],
+					"path": [
+						"plus",
+						"v1",
+						"people",
+						"{{userId}}"
+					]
+				},
 				"description": "# Purpose\nGet google account information about an account.  \nTo get information about yourself an alias for the userId is **me**."
 			},
 			"response": []
@@ -371,34 +381,62 @@
 				}
 			],
 			"request": {
-				"url": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "Bearer {{token}}",
-						"description": ""
+						"value": "Bearer {{token}}"
 					}
 				],
 				"body": {},
+				"url": {
+					"raw": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
+					"protocol": "https",
+					"host": [
+						"www",
+						"googleapis",
+						"com"
+					],
+					"path": [
+						"gmail",
+						"v1",
+						"users",
+						"{{userId}}",
+						"profile"
+					]
+				},
 				"description": "# Purpose\nGetting some basic Gmail informations about a given user."
 			},
 			"response": [
 				{
-					"id": "7992584f-09b0-4db1-8471-ef686ff1dfa5",
+					"id": "8a2cea8c-dd49-4ccc-ace6-53e23e59a7ab",
 					"name": "Get gmail profile",
 					"originalRequest": {
-						"url": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
 						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
 								"value": "Bearer {{token}}",
-								"description": "",
 								"disabled": false
 							}
 						],
-						"body": {}
+						"body": {},
+						"url": {
+							"raw": "https://www.googleapis.com/gmail/v1/users/{{userId}}/profile",
+							"protocol": "https",
+							"host": [
+								"www",
+								"googleapis",
+								"com"
+							],
+							"path": [
+								"gmail",
+								"v1",
+								"users",
+								"{{userId}}",
+								"profile"
+							]
+						}
 					},
 					"status": "OK",
 					"code": 200,
@@ -508,6 +546,10 @@
 							"var refreshedToken=pm.response.json().access_token;",
 							"pm.environment.set(\"token\", refreshedToken);",
 							"",
+							"var token = pm.environment.get(\"token\");",
+							"",
+							"console.log(token);",
+							"",
 							"var lastRequestId = pm.environment.get(\"lastRequestId\");",
 							"",
 							"",
@@ -521,6 +563,9 @@
 				}
 			],
 			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {},
 				"url": {
 					"raw": "https://www.googleapis.com/oauth2/v4/token?client_id={{clientId}}&client_secret={{clientSecret}}&refresh_token={{refreshToken}}&grant_type=refresh_token",
 					"protocol": "https",
@@ -538,40 +583,35 @@
 						{
 							"key": "client_id",
 							"value": "{{clientId}}",
-							"equals": true,
-							"description": ""
+							"equals": true
 						},
 						{
 							"key": "client_secret",
 							"value": "{{clientSecret}}",
-							"equals": true,
-							"description": ""
+							"equals": true
 						},
 						{
 							"key": "refresh_token",
 							"value": "{{refreshToken}}",
-							"equals": true,
-							"description": ""
+							"equals": true
 						},
 						{
 							"key": "grant_type",
 							"value": "refresh_token",
-							"equals": true,
-							"description": ""
+							"equals": true
 						}
-					],
-					"variable": []
+					]
 				},
-				"method": "POST",
-				"header": [],
-				"body": {},
 				"description": "# Purpose\nRequest Util to refresh a token that is either invalid or expired.  \nGiven a clientId, a client secret and a google OAuth2 refresh token, we get in return a refreshed token."
 			},
 			"response": [
 				{
-					"id": "2332e38e-2901-49c9-9ae4-93b5744b4e68",
+					"id": "150db02e-213e-46e7-83c7-898500a4f49d",
 					"name": "Refresh token response",
 					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {},
 						"url": {
 							"raw": "https://www.googleapis.com/oauth2/v4/token?client_id={{clientId}}&client_secret={{clientSecret}}&refresh_token={{refreshToken}}&grant_type=refresh_token",
 							"protocol": "https",
@@ -589,33 +629,25 @@
 								{
 									"key": "client_id",
 									"value": "{{clientId}}",
-									"equals": true,
-									"description": ""
+									"equals": true
 								},
 								{
 									"key": "client_secret",
 									"value": "{{clientSecret}}",
-									"equals": true,
-									"description": ""
+									"equals": true
 								},
 								{
 									"key": "refresh_token",
 									"value": "{{refreshToken}}",
-									"equals": true,
-									"description": ""
+									"equals": true
 								},
 								{
 									"key": "grant_type",
 									"value": "refresh_token",
-									"equals": true,
-									"description": ""
+									"equals": true
 								}
-							],
-							"variable": []
-						},
-						"method": "POST",
-						"header": [],
-						"body": {}
+							]
+						}
 					},
 					"status": "OK",
 					"code": 200,
